@@ -1,4 +1,4 @@
-from processor.paasforchain_supply_chain_processor.protobuf import agent_pb2
+from supply_chain_protos import agent_pb2
 
 # TODO: Populate me
 from addressing.supply_chain_addressers import addresser

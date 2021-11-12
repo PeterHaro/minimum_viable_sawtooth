@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(TOP_DIR, 'addressing'))
 sys.path.insert(0, os.path.join(TOP_DIR, 'processors'))
 sys.path.insert(0, os.path.join(TOP_DIR, 'protobuf'))
 
-from processors.supply_chain_transaction_processors.main import main
+from supply_chain_transaction_processors.main import main
 
 if __name__ == '__main__':
     main()

@@ -63,7 +63,4 @@ def fix_import(contents, pkg, sub_dir=False):
 
 
 if __name__ == '__main__':
-    make_protobuf('processors/supply_chain_transaction_processors', 'protobuf')
-   # make_protobuf('ledger_sync', ' node/protobuf')
-   # make_protobuf('ledger_sync', ' python/protobuf')
-    make_protobuf('tests', 'integration_tests/protobuf')
+    make_protobuf('protobuf', 'supply_chain_protos')

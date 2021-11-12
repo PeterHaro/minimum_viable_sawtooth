@@ -3,9 +3,21 @@ import logging
 import time
 
 from sawtooth_sdk.processor.exceptions import InvalidTransaction, InternalError
-from supply_chain_processor.protobuf.payload_pb2 import AnswerProposalAction
+from supply_chain_protos.payload_pb2 import SupplyChainPayload
+from supply_chain_protos.payload_pb2 import AnswerProposalAction
+from supply_chain_protos.agent_pb2 import AgentContainer
+from supply_chain_protos.property_pb2 import PropertyContainer, Property
+from supply_chain_protos.property_pb2 import PropertyPage
+from supply_chain_protos.property_pb2 import PropertyPageContainer
+from supply_chain_protos.property_pb2 import PropertySchema
+from supply_chain_protos.proposal_pb2 import Proposal
+from supply_chain_protos.proposal_pb2 import ProposalContainer
+from supply_chain_protos.record_pb2 import Record
+from supply_chain_protos.record_pb2 import RecordContainer
+from supply_chain_protos.record_pb2 import RecordType
+from supply_chain_protos.record_pb2 import RecordTypeContainer
 
-from addressing.supply_chain_addressers import addresser
+from supply_chain_addressers import addresser
 
 SYNC_TOLERANCE = 60 * 5
 MAX_LAT = 90 * 1e6
@@ -840,11 +852,23 @@ def _validate_timestamp(timestamp):
                 timestamp, current_time, SYNC_TOLERANCE))
 
 
+"""message PropertySchema {
+  enum DataType {
+    TYPE_UNSET = 0;
+    BYTES = 1;
+    BOOLEAN = 2;
+    NUMBER = 3;
+    STRING = 4;
+    ENUM = 5;
+    STRUCT = 6;
+    LOCATION = 7;
+  }
+"""
 DATA_TYPE_TO_ATTRIBUTE = {
     PropertySchema.BYTES: 'bytes_value',
     PropertySchema.STRING: 'string_value',
-    PropertySchema.INT: 'int_value',
-    PropertySchema.FLOAT: 'float_value',
+    PropertySchema.NUMBER: 'float_value',
+    #PropertySchema.NUMBER: 'int_value',
     PropertySchema.LOCATION: 'location_value',
 }
 
