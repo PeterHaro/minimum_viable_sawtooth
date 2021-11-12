@@ -36,5 +36,4 @@ ENV PATH $PATH:/project/minimal_viable_sawtooth/bin
 RUN protobuf_generator
 # RUN PROTOGEN?
 
-ENTRYPOINT ["tail"]
-CMD ["-f","/dev/null"]
+ENTRYPOINT ["processor_runner"]
