@@ -47,8 +47,10 @@ services:
     depends_on:
       - proto-runner
     entrypoint: "bash -c \"\
-        sawadm keygen && \
-        sawtooth keygen my_key && \
+        if [ ! -f /etc/sawtooth/keys/validator.priv ]; then
+        sawadm keygen &&
+        sawtooth keygen my_key &&
+        fi;
         sawset genesis -k /root/.sawtooth/keys/my_key.priv && \
         sawset proposal create \
           -k /root/.sawtooth/keys/my_key.priv \
