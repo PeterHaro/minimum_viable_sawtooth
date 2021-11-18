@@ -32,7 +32,8 @@ PROPERTY_PAGE_MAX_LENGTH = 256
 TOTAL_PROPERTY_PAGE_MAX = 16 ** 4 - 1
 
 
-class SupplyChainTransactionHandler(object):  # TODO: PROPERLY AND INHERITC FROM SC HANDELR
+# TODO: PROPERLY AND INHERITC FROM SC HANDELR
+class SupplyChainTransactionHandler(object):
 
     @property
     def family_name(self):
@@ -868,7 +869,7 @@ DATA_TYPE_TO_ATTRIBUTE = {
     PropertySchema.BYTES: 'bytes_value',
     PropertySchema.STRING: 'string_value',
     PropertySchema.NUMBER: 'float_value',
-    #PropertySchema.NUMBER: 'int_value',
+    # PropertySchema.NUMBER: 'int_value',
     PropertySchema.LOCATION: 'location_value',
 }
 

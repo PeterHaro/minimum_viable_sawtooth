@@ -10,8 +10,6 @@ from sawtooth_sdk.processor.core import TransactionProcessor
 from sawtooth_sdk.processor.log import init_console_logging
 from sawtooth_sdk.processor.log import log_configuration
 
-
-from supply_chain_transaction_processors.configuration import ENDPOINT
 from supply_chain_transaction_processors.handler import SupplyChainTransactionHandler
 
 DISTRIBUTION_NAME = 'paasforchain-supply-chain'
@@ -39,10 +37,11 @@ def create_parser(prog_name):
         prog=prog_name,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('endpoint',
-                        nargs='?',
-                        default='tcp://localhost:4004',
-                        help='Endpoint for the validator connection')
+    parser.add_argument(
+        '-C', '--connect',
+        default='tcp://localhost:4004',
+        dest="endpoint",
+        help='Endpoint for the validator connection')
 
     parser.add_argument(
         '-v', '--verbose',
