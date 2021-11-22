@@ -26,7 +26,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F10
   && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install grpcio grpcio-tools
+RUN pip3 install grpcio grpcio-tools sawtooth-sdk
 RUN pip3 install --upgrade protobuf
 
 WORKDIR /supply-chain

@@ -14,12 +14,12 @@ services:
         proto_gen
       "
 
-  supply-processor:
+  supply-tp:
     build:
       context: .
       dockerfile: ./processors/Dockerfile
-    image: supply-processor
-    container_name: supply-processor
+    image: supply-tp
+    container_name: supply-tp
     volumes:
       - ".:/supply-chain"
     depends_on:
@@ -42,22 +42,23 @@ services:
     container_name: supply-validator
     expose:
       - 4004
+      - 8800
     ports:
       - "4004:4004"
     depends_on:
       - proto-runner
     entrypoint: "bash -c \"\
-        if [ ! -f /etc/sawtooth/keys/validator.priv ]; then
-        sawadm keygen &&
-        sawtooth keygen my_key &&
-        fi;
+      if [ ! -f /etc/sawtooth/keys/validator.priv ]; then
+        sawadm keygen && \
+        sawtooth keygen my_key && \
         sawset genesis -k /root/.sawtooth/keys/my_key.priv && \
         sawset proposal create \
           -k /root/.sawtooth/keys/my_key.priv \
           sawtooth.consensus.algorithm.name=Devmode \
           sawtooth.consensus.algorithm.version=0.1 \
           -o config.batch && \
-        sawadm genesis config-genesis.batch config.batch && \
+        sawadm genesis config-genesis.batch config.batch; \
+      fi; \
         sawtooth-validator -vv \
           --endpoint tcp://validator:8800 \
           --bind component:tcp://eth0:4004 \
@@ -91,6 +92,8 @@ services:
     container_name: sawtooth-shell
     depends_on:
       - rest-api
+    volumes:
+      - ".:/supply-chain"
     entrypoint: "bash -c \"\
       sawtooth keygen --force && \
       tail -f /dev/null \
