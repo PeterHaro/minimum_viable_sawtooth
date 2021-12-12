@@ -1,4 +1,4 @@
-from supply_chain_protos import agent_pb2
+from protobuf.supply_chain_protos import agent_pb2
 
 # TODO: Populate me
 from addressing.supply_chain_addressers import addresser
@@ -30,17 +30,17 @@ class SupplyChainState(object):
 
         return None
 
-    def set_agent(self, public_key, name, timestamp):
+    def set_agent(self, payload, signer, timestamp, state):
         """Creates a new agent in state
 
         Args:
-            public_key (str): The public key of the agent
-            name (str): The human-readable name of the agent
+            # public_key (str): The public key of the agent
+            # name (str): The human-readable name of the agent
             timestamp (int): Unix UTC timestamp of when the agent was created
         """
-        address = addresser.get_agent_address(public_key)
+        address = addresser.get_agent_address(signer)
         agent = agent_pb2.Agent(
-            public_key=public_key, name=name, timestamp=timestamp)
+            public_key=signer, name=payload.name, timestamp=timestamp)
         container = agent_pb2.AgentContainer()
         state_entries = self._context.get_state(
             addresses=[address], timeout=self._timeout)
@@ -52,3 +52,20 @@ class SupplyChainState(object):
 
         updated_state = {address: data}
         self._context.set_state(updated_state, timeout=self._timeout)
+
+#     def set_agent_old(self, public_key, name, timestamp):
+#
+#         address = addresser.get_agent_address(public_key)
+#         agent = agent_pb2.Agent(
+#             public_key=public_key, name=name, timestamp=timestamp)
+#         container = agent_pb2.AgentContainer()
+#         state_entries = self._context.get_state(
+#             addresses=[address], timeout=self._timeout)
+#         if state_entries:
+#             container.ParseFromString(state_entries[0].data)
+#
+#         container.entries.extend([agent])
+#         data = container.SerializeToString()
+#
+#         updated_state = {address: data}
+#         self._context.set_state(updated_state, timeout=self._timeout)

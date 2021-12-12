@@ -10,7 +10,7 @@ from sawtooth_sdk.processor.core import TransactionProcessor
 from sawtooth_sdk.processor.log import init_console_logging
 from sawtooth_sdk.processor.log import log_configuration
 
-from supply_chain_transaction_processors.handler import SupplyChainTransactionHandler
+from handler import SupplyChainTransactionHandler
 
 DISTRIBUTION_NAME = 'paasforchain-supply-chain'
 

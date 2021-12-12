@@ -3,21 +3,23 @@ import logging
 import time
 
 from sawtooth_sdk.processor.exceptions import InvalidTransaction, InternalError
-from supply_chain_protos.payload_pb2 import SupplyChainPayload
-from supply_chain_protos.payload_pb2 import AnswerProposalAction
-from supply_chain_protos.agent_pb2 import AgentContainer
-from supply_chain_protos.property_pb2 import PropertyContainer, Property
-from supply_chain_protos.property_pb2 import PropertyPage
-from supply_chain_protos.property_pb2 import PropertyPageContainer
-from supply_chain_protos.property_pb2 import PropertySchema
-from supply_chain_protos.proposal_pb2 import Proposal
-from supply_chain_protos.proposal_pb2 import ProposalContainer
-from supply_chain_protos.record_pb2 import Record
-from supply_chain_protos.record_pb2 import RecordContainer
-from supply_chain_protos.record_pb2 import RecordType
-from supply_chain_protos.record_pb2 import RecordTypeContainer
+from sawtooth_sdk.processor.handler import TransactionHandler
 
-from supply_chain_addressers import addresser
+from protobuf.supply_chain_protos.payload_pb2 import SupplyChainPayload
+from protobuf.supply_chain_protos.payload_pb2 import AnswerProposalAction
+from protobuf.supply_chain_protos.agent_pb2 import AgentContainer, Agent
+from protobuf.supply_chain_protos.property_pb2 import PropertyContainer, Property
+from protobuf.supply_chain_protos.property_pb2 import PropertyPage
+from protobuf.supply_chain_protos.property_pb2 import PropertyPageContainer
+from protobuf.supply_chain_protos.property_pb2 import PropertySchema
+from protobuf.supply_chain_protos.proposal_pb2 import Proposal
+from protobuf.supply_chain_protos.proposal_pb2 import ProposalContainer
+from protobuf.supply_chain_protos.record_pb2 import Record
+from protobuf.supply_chain_protos.record_pb2 import RecordContainer
+from protobuf.supply_chain_protos.record_pb2 import RecordType
+from protobuf.supply_chain_protos.record_pb2 import RecordTypeContainer
+
+from addressing.supply_chain_addressers import addresser
 
 SYNC_TOLERANCE = 60 * 5
 MAX_LAT = 90 * 1e6
@@ -32,8 +34,7 @@ PROPERTY_PAGE_MAX_LENGTH = 256
 TOTAL_PROPERTY_PAGE_MAX = 16 ** 4 - 1
 
 
-# TODO: PROPERLY AND INHERITC FROM SC HANDELR
-class SupplyChainTransactionHandler(object):
+class SupplyChainTransactionHandler(TransactionHandler):
 
     @property
     def family_name(self):
@@ -46,14 +47,6 @@ class SupplyChainTransactionHandler(object):
     @property
     def namespaces(self):
         return [addresser.NAMESPACE]
-
-        """
-        Apply is the single method where all the business logic for a
-        transaction family is defined. The method will be called by the
-        transaction processor upon receiving a TpProcessRequest that the
-        handler understands and will pass in the TpProcessRequest and an
-        initialized instance of the Context type.
-        """
 
     def apply(self, transaction, state):
         """
@@ -93,7 +86,7 @@ def _unpack_transaction(transaction):
     try:
         attribute, handler = TYPE_TO_ACTION_HANDLER[action]
     except KeyError:
-        raise Exception('Specified action is invalid')
+        raise InvalidTransaction('Specified action is invalid')
 
     payload = getattr(payload, attribute)
 
@@ -101,7 +94,6 @@ def _unpack_transaction(transaction):
 
 
 # hANDLERS
-"""
 def _create_agent(payload, signer, timestamp, state):
     name = payload.name
 
@@ -109,7 +101,7 @@ def _create_agent(payload, signer, timestamp, state):
         raise InvalidTransaction(
             'Agent name cannot be empty string')
 
-    address = addressing.make_agent_address(signer)
+    address = addresser.get_agent_address(signer)
     container = _get_container(state, address)
 
     for agent in container.entries:
@@ -127,22 +119,21 @@ def _create_agent(payload, signer, timestamp, state):
     container.entries.sort(key=lambda ag: ag.public_key)
 
     _set_container(state, address, container)
-"""
 
 
-def _create_agent(state, public_key, payload):
-    name = payload.name
-    if not name:
-        raise InvalidTransaction(
-            'Agent name cannot be empty string')
-
-    if state.get_agent(public_key):
-        raise InvalidTransaction('Agent with the public key {} already '
-                                 'exists'.format(public_key))
-    state.set_agent(
-        public_key=public_key,
-        name=payload.data.name,
-        timestamp=payload.timestamp)
+# def _create_agent(state, public_key, payload):
+#     name = payload.name
+#     if not name:
+#         raise InvalidTransaction(
+#             'Agent name cannot be empty string')
+#
+#     if state.get_agent(public_key):
+#         raise InvalidTransaction('Agent with the public key {} already '
+#                                  'exists'.format(public_key))
+#     state.set_agent(
+#         public_key=public_key,
+#         name=payload.data.name,
+#         timestamp=payload.timestamp)
 
 
 def _create_record(payload, signer, timestamp, state):
