@@ -48,7 +48,7 @@ class SupplyChainTransactionHandler(TransactionHandler):
     def namespaces(self):
         return [addresser.NAMESPACE]
 
-    def apply(self, transaction, state):
+    def apply(self, transaction, context):
         """
         A SupplyChain payload consists of a timestamp, an action tag, and
         attributes corresponding to various actions (create|_agent,
@@ -66,7 +66,7 @@ class SupplyChainTransactionHandler(TransactionHandler):
         that validation is common to all transactions.
         """
         signer, timestamp, payload, handler = _unpack_transaction(transaction)
-        handler(payload, signer, timestamp, state)
+        handler(payload, signer, timestamp, context)
 
 
 def _unpack_transaction(transaction):
@@ -868,8 +868,7 @@ TYPE_TO_ACTION_HANDLER = {
     SupplyChainPayload.CREATE_AGENT: ('create_agent', _create_agent),
     SupplyChainPayload.CREATE_RECORD: ('create_record', _create_record),
     SupplyChainPayload.FINALIZE_RECORD: ('finalize_record', _finalize_record),
-    SupplyChainPayload.CREATE_RECORD_TYPE: ('create_record_type',
-                                            _create_record_type),
+    SupplyChainPayload.CREATE_RECORD_TYPE: ('create_record_type', _create_record_type),
     SupplyChainPayload.UPDATE_PROPERTIES: ('update_properties', _update_properties),
     SupplyChainPayload.CREATE_PROPOSAL: ('create_proposal', _create_proposal),
     SupplyChainPayload.ANSWER_PROPOSAL: ('answer_proposal', _answer_proposal),

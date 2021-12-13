@@ -30,7 +30,7 @@ class SupplyChainState(object):
 
         return None
 
-    def set_agent(self, payload, signer, timestamp, state):
+    def set_agent(self, payload, signer, timestamp):
         """Creates a new agent in state
 
         Args:
@@ -38,6 +38,7 @@ class SupplyChainState(object):
             # name (str): The human-readable name of the agent
             timestamp (int): Unix UTC timestamp of when the agent was created
         """
+        print("Hello?")
         address = addresser.get_agent_address(signer)
         agent = agent_pb2.Agent(
             public_key=signer, name=payload.name, timestamp=timestamp)

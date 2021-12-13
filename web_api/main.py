@@ -38,7 +38,7 @@ async def change_broadcaster_task():
 
 
 @app.on_event("startup")
-async def threads_setup():
+async def tasks_setup():
     asyncio.create_task(table_change_task("blocks")),
     asyncio.create_task(table_change_task("agents")),
     asyncio.create_task(change_broadcaster_task())
