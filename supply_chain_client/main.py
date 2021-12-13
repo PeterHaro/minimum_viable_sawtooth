@@ -1,86 +1,78 @@
 import base64
-import os
 import random
-import sys
 from hashlib import sha512
 import time
 import requests
 
-TOP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.insert(0, os.path.join(TOP_DIR, 'protobuf'))
-
 from sawtooth_sdk.protobuf.transaction_pb2 import TransactionHeader, Transaction
 from sawtooth_sdk.protobuf.batch_pb2 import BatchHeader, Batch, BatchList
-from sawtooth_signing import create_context
-from sawtooth_signing import CryptoFactory
 
 from addressing.supply_chain_addressers.addresser import FAMILY_NAME, FAMILY_VERSION, get_agent_address
-from protobuf.supply_chain_protos.payload_pb2 import SupplyChainPayload, CreateAgentAction
-from protobuf.supply_chain_protos.agent_pb2 import AgentContainer
 
-
-# TODO: Handle signing properly
-context = create_context('secp256k1')
-private_key = context.new_random_private_key()
-signer = CryptoFactory(context).new_signer(private_key)
-pub = signer.get_public_key().as_hex()
+from crypto import get_new_signer
+from protobuf.payload_pb2 import *
+from protobuf.property_pb2 import *
+from protobuf.agent_pb2 import *
+from supply_chain_client.models.agent import Agent
+from supply_chain_client.models.record_type import RecordType
 
 
 class SupplyChainClient:
 
     def __init__(self, api_url: str):
         self._api = api_url
+        self._signer = get_new_signer()
+        self.pub_key = self._signer.get_public_key().as_hex()
 
     def get_agent(self, pub_key: str):
         address = get_agent_address(pub_key)
         return self.query_state(address)
 
-    def add_agent(self, pub_key, name):
-        payload = self.create_add_agent_payload(name)
-        address = get_agent_address(pub_key)
-        header = self.create_transaction_header(address, payload)
-        self.send_payload(payload, header)
+    def add_agent(self, agent: Agent):
+        payload = agent.add_agent_payload()
+        header = self.create_transaction_header(agent.address, payload, agent)
+        self.send_payload(payload, header, agent)
 
-    # def add_update_to_agent(self, pub_key, temperature):
-    #     payload = self.create_update_agent_payload(name, temperature)
-    #     address = get_agent_address(pub_key)
-    #     header = self.create_transaction_header(get_agent_address(name), payload)
-    #     self.send_payload(payload, header)
+    def add_record(self, agent: Agent, record):
+        pass
 
-    def send_payload(self, payload, header):
+    def add_record_type(self, record_type: RecordType, agent: Agent):
+        payload = record_type.add_record_payload()
+        header = self.create_transaction_header(record_type.address, payload, agent)
+        self.send_payload(payload, header, agent)
+
+    def send_payload(self, payload, header, agent):
         transaction = Transaction(
             header=header,
-            header_signature=signer.sign(header),
+            header_signature=agent.sign(header),
             payload=payload)
 
         batch = self.create_batch(transaction)
         batch_list = BatchList(batches=[batch]).SerializeToString()
         self.send_batches(batch_list)
 
-    @staticmethod
-    def create_transaction_header(address, payload):
+    def create_transaction_header(self, address, payload, agent):
         return TransactionHeader(
             family_name=FAMILY_NAME,
             family_version=FAMILY_VERSION,
-            inputs=[address],
+            inputs=[address, agent.address],
             outputs=[address],
-            signer_public_key=pub,
-            batcher_public_key=pub,
+            signer_public_key=agent.pub_key,
+            batcher_public_key=self.pub_key,
             dependencies=[],
             payload_sha512=sha512(payload).hexdigest(),
             nonce=hex(random.randint(0, 2 ** 64))
         ).SerializeToString()
 
-    @staticmethod
-    def create_batch(transaction):
+    def create_batch(self, transaction):
         batch_header = BatchHeader(
-            signer_public_key=pub,
+            signer_public_key=self.pub_key,
             transaction_ids=[transaction.header_signature],
         ).SerializeToString()
 
         return Batch(
             header=batch_header,
-            header_signature=signer.sign(batch_header),
+            header_signature=self._signer.sign(batch_header),
             transactions=[transaction]
         )
 
@@ -93,21 +85,11 @@ class SupplyChainClient:
         ).SerializeToString()
 
     @staticmethod
-    def create_update_fesk_payload(name, temperature):
-        now = int(time.time())
-        update = Update(
-            timestamp=now,
-            temperature=temperature)
-
-        action = Action(
-            action_type=ValidActions.UPDATE,
-            update=update)
-
-        return FeskPayload(
-            name=name,
-            timestamp=now,
-            action=action,
-            public_key=pub
+    def create_add_record_type_payload(name):
+        return SupplyChainPayload(
+            action=SupplyChainPayload.Action.CREATE_AGENT,
+            timestamp=int(time.time()),
+            create_record_type=CreateRecordTypeAction(name=name)
         ).SerializeToString()
 
     def send_batches(self, batch_list):
@@ -137,11 +119,21 @@ def print_agent(resp):
 
 
 if __name__ == "__main__":
-
-    agent_name = "agent007"
-
     client = SupplyChainClient("http://localhost:8008")
-    client.add_agent(pub, agent_name)
+
+    bond = Agent("Bond, James")
+    client.add_agent(bond)
+
+    time.sleep(1.25)
+
+    temperature_property = PropertySchema(
+        name="temperature",
+        data_type=3,  # PropertySchema.DataType.NUMBER,
+        unit="Celsius"
+    )
+
+    fish_pallet = RecordType("FishPallet", [temperature_property])
+    client.add_record_type(fish_pallet, bond)
 
     # time.sleep(1)
     # resp = client.get_agent(pub)
