@@ -64,3 +64,4 @@ def fix_import(contents, pkg, sub_dir=False):
 
 if __name__ == '__main__':
     make_protobuf('protobuf', 'supply_chain_protos')
+    make_protobuf('supply_chain_client', 'protobuf')
