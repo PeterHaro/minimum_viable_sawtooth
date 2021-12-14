@@ -20,10 +20,14 @@ from addressing.supply_chain_addressers.addresser import get_address_type, Addre
 
 TABLE_NAMES = {
     AddressSpace.AGENT: 'agents',
+    AddressSpace.RECORD_TYPE: 'recordTypes',
+    AddressSpace.RECORD: 'records'
 }
 
 SECONDARY_INDEXES = {
     AddressSpace.AGENT: 'public_key',
+    AddressSpace.RECORD_TYPE: 'name',
+    AddressSpace.RECORD: 'record_id'
 }
 
 

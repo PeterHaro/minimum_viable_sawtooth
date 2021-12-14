@@ -9,7 +9,5 @@ sys.path.insert(0, os.path.join(TOP_DIR, 'protobuf'))
 
 from ledger_sync.main import main
 
-print("Yoyoyo here i am")
-
 if __name__ == '__main__':
     main()

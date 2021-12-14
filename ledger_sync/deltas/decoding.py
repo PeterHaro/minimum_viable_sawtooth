@@ -16,10 +16,13 @@
 from addressing.supply_chain_addressers.addresser import get_address_type
 from addressing.supply_chain_addressers.addresser import AddressSpace
 from protobuf.supply_chain_protos.agent_pb2 import AgentContainer, Agent
+from protobuf.supply_chain_protos.record_pb2 import RecordTypeContainer, RecordType, RecordContainer, Record
 
 
 CONTAINERS = {
     AddressSpace.AGENT: AgentContainer,
+    AddressSpace.RECORD_TYPE: RecordTypeContainer,
+    AddressSpace.RECORD: RecordContainer
 }
 
 IGNORE = {
@@ -39,7 +42,7 @@ def data_to_dicts(address, data):
     try:
         container = CONTAINERS[data_type]
     except KeyError:
-        raise TypeError('Unknown data type: {}'.format(data_type))
+        raise TypeError('No container for action type: {}'.format(data_type))
 
     entries = _parse_proto(container, data).entries
     return [_proto_to_dict(pb) for pb in entries]

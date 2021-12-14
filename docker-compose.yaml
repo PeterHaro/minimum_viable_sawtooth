@@ -49,7 +49,7 @@ services:
       - ledger-sync
     command: |
       bash -c "
-        sleep 1 && \
+        sleep 2 && \
         web_api
       "
 
@@ -69,23 +69,6 @@ services:
         sleep 1 && \
         supply_processor -C tcp://validator:4004
       "
-
-#   fesk-tp:
-#     build:
-#       context: .
-#       dockerfile: ./processors/Dockerfile
-#     image: fesk-tp
-#     container_name: fesk-tp
-#     volumes:
-#       - ".:/supply_chain"
-#     depends_on:
-#       - validator
-#       - rest-api
-#     entrypoint: |
-#       bash -c "
-#         sleep 1 && \
-#         fesk_processor -vv -C tcp://validator:4004
-#       "
 
   settings-tp:
     image: hyperledger/sawtooth-settings-tp

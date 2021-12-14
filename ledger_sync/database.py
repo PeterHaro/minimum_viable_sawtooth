@@ -57,6 +57,10 @@ class Database(object):
             r.table_create("blocks", primary_key="block_num").run(self._conn)
         if 'agents' not in tables:
             r.table_create("agents", primary_key="public_key").run(self._conn)
+        if 'recordTypes' not in tables:
+            r.table_create("recordTypes", primary_key="name").run(self._conn)
+        if 'records' not in tables:
+            r.table_create("records", primary_key="record_id").run(self._conn)
 
     def fetch(self, table_name, primary_id):
         """Fetches a single resource by its primary id
@@ -93,7 +97,7 @@ class Database(object):
                 lambda table_name: r.branch(
                     r.eq(table_name, 'blocks'),
                     [],
-                    r.eq(table_name, 'auth'),
+                    r.eq(table_name, 'auth'),  # todo: figure out how we want to do auth
                     [],
                     r.db(self._name).table(table_name)
                     .filter(lambda rsc: rsc['start_block_num'].ge(block_num))
