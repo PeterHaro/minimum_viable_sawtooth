@@ -1,6 +1,8 @@
 import asyncio
+from typing import List
 
-from database import get_table_feed
+from database import get_table_feed, Database
+from models import Agent, RecordType, Record
 from websocket_manager import WebSocketManager
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,8 +10,24 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 
 app = FastAPI()
+db = Database()
 manager = WebSocketManager()
 updates_queue = asyncio.Queue()
+
+
+@app.get("/agents", response_model=List[Agent])
+async def agents():
+    return await db.get_agents()
+
+
+@app.get("/record_types", response_model=List[RecordType])
+async def record_types():
+    return await db.get_record_types()
+
+
+@app.get("/records", response_model=List[Record])
+async def records():
+    return await db.get_records()
 
 
 @app.websocket("/ws/feed")
@@ -41,4 +59,6 @@ async def change_broadcaster_task():
 async def tasks_setup():
     asyncio.create_task(table_change_task("blocks")),
     asyncio.create_task(table_change_task("agents")),
+    asyncio.create_task(table_change_task("recordTypes")),
     asyncio.create_task(change_broadcaster_task())
+    await db.connect()
