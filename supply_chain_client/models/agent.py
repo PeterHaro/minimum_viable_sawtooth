@@ -15,12 +15,17 @@ class Agent:
     def sign(self, msg):
         return self._signer.sign(msg)
 
-    def add_agent_payload(self):
+    @property
+    def creation_payload(self):
         return SupplyChainPayload(
             action=SupplyChainPayload.Action.CREATE_AGENT,
             timestamp=int(time.time()),
             create_agent=CreateAgentAction(name=self.name)
         ).SerializeToString()
+
+    @property
+    def creation_addresses(self):
+        return [self.address]
 
     @property
     def address(self):

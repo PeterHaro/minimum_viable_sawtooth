@@ -12,22 +12,22 @@ class RecordType:
         self.name = name
         self.properties = properties
 
-    def add_record_payload(self):
-        action = CreateRecordTypeAction(name=self.name)
-        for p in self.properties:
-            action.properties.append(p)
+    @property
+    def creation_payload(self):
+        action = CreateRecordTypeAction(
+            name=self.name,
+            properties=self.properties
+        )
 
-        payload = SupplyChainPayload(
+        return SupplyChainPayload(
             action=SupplyChainPayload.Action.CREATE_RECORD_TYPE,
             timestamp=int(time.time()),
             create_record_type=action
-        )
-        return payload.SerializeToString()
+        ).SerializeToString()
 
-    # def add_properties(self, payload):
-    #     for p in self.properties:
-    #         payload.properties.append(p)
-    #     return payload
+    @property
+    def creation_addresses(self):
+        return [self.address]
 
     @property
     def address(self):
