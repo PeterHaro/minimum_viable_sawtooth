@@ -2,7 +2,7 @@ import asyncio
 from typing import List
 
 from database import get_table_feed, Database
-from models import Agent, RecordType, Record
+from models import Agent, RecordType, Record, Property
 from websocket_manager import WebSocketManager
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +28,11 @@ async def record_types():
 @app.get("/records", response_model=List[Record])
 async def records():
     return await db.get_records()
+
+
+@app.get("/properties/{record_id}", response_model=List[Property])
+async def properties(record_id: str):
+    return await db.get_properties(record_id)
 
 
 @app.websocket("/ws/feed")

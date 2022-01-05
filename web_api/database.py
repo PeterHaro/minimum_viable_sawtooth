@@ -24,8 +24,7 @@ class Database:
 
     async def get_agents(self):
         return await r.table('agents') \
-            .without('public_key', 'delta_id',
-                     'start_block_num', 'end_block_num') \
+            .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
 
     async def get_record_types(self):
@@ -35,5 +34,11 @@ class Database:
 
     async def get_records(self):
         return await r.table('records') \
+            .without('delta_id', 'start_block_num', 'end_block_num') \
+            .coerce_to('array').run(self.connection)
+
+    async def get_properties(self, record_id: str):
+        return await r.table('properties') \
+            .filter(r.row['record_id'] == record_id) \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
