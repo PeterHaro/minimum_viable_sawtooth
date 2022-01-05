@@ -103,6 +103,7 @@ class Subscriber(object):
 
             event_list = EventList()
             event_list.ParseFromString(message_future.result().content)
+
             for handler in self._event_handlers:
                 handler(event_list.events)
 
@@ -136,9 +137,9 @@ def main():
     except KeyboardInterrupt:
         sys.exit(0)
 
-    except Exception as err:
-        print(err)
-        sys.exit(1)
+    # except Exception as err:
+    #     print("Error:", err)
+    #     sys.exit(1)
 
     finally:
         try:

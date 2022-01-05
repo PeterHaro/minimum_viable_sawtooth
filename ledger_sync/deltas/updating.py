@@ -21,13 +21,25 @@ from addressing.supply_chain_addressers.addresser import get_address_type, Addre
 TABLE_NAMES = {
     AddressSpace.AGENT: 'agents',
     AddressSpace.RECORD_TYPE: 'recordTypes',
-    AddressSpace.RECORD: 'records'
+    AddressSpace.RECORD: 'records',
+    AddressSpace.PROPERTY: 'properties',
+    AddressSpace.PROPERTY_PAGE: 'propertyPages'
 }
 
 SECONDARY_INDEXES = {
     AddressSpace.AGENT: 'public_key',
     AddressSpace.RECORD_TYPE: 'name',
-    AddressSpace.RECORD: 'record_id'
+    AddressSpace.RECORD: 'record_id',
+    AddressSpace.PROPERTY: 'attributes',
+    AddressSpace.PROPERTY_PAGE: 'attributes'
+}
+
+SECONDARY_INDEX_COMPONENTS = {
+    AddressSpace.AGENT: ['public_key'],
+    AddressSpace.RECORD_TYPE: ['name'],
+    AddressSpace.RECORD: ['record_id'],
+    AddressSpace.PROPERTY: ['name', 'record_id'],
+    AddressSpace.PROPERTY_PAGE: ['name', 'record_id', 'page_num']
 }
 
 
@@ -47,11 +59,14 @@ def _update(database, block_num, address, resource):
     try:
         table_query = database.get_table(TABLE_NAMES[data_type])
         seconday_index = SECONDARY_INDEXES[data_type]
+        index_components = SECONDARY_INDEX_COMPONENTS[data_type]
     except KeyError:
         raise TypeError('Unknown data type: {}'.format(data_type))
 
+    components = [resource[c] for c in index_components]
+
     query = table_query\
-        .get_all(resource[seconday_index], index=seconday_index)\
+        .get_all(components, index=seconday_index)\
         .filter({'end_block_num': sys.maxsize})\
         .update({'end_block_num': block_num})\
         .merge(table_query.insert(resource).without('replaced'))

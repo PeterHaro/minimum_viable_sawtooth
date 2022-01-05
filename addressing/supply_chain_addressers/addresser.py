@@ -35,6 +35,7 @@ class AddressSpace(enum.IntEnum):
     PROPERTY: int = 2
     PROPOSAL: int = 3
     RECORD_TYPE: int = 4
+    PROPERTY_PAGE: int = 5
 
     OTHER_FAMILY: int = 100
 
@@ -54,7 +55,7 @@ def get_record_type_address(type_name: str) -> str:
         type_name.encode('utf-8')).hexdigest()[:62]
 
 
-def make_property_address(record_id: str, property_name: str, page: int = 0) -> str:
+def get_property_address(record_id: str, property_name: str, page: int = 0) -> str:
     return make_property_address_range(record_id) + _hash(property_name)[:22] + num_to_page_number(page)
 
 
@@ -81,7 +82,10 @@ def get_address_type(address) -> int:
     if infix == RECORD_PREFIX:
         return AddressSpace.RECORD
     if infix == PROPERTY_PREFIX:
-        return AddressSpace.PROPERTY
+        if address[-4:] == "0000":
+            return AddressSpace.PROPERTY
+        else:
+            return AddressSpace.PROPERTY_PAGE
     if infix == PROPOSAL_PREFIX:
         return AddressSpace.PROPOSAL
     if infix == RECORD_TYPE_PREFIX:

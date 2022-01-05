@@ -65,8 +65,17 @@ class SupplyChainTransactionHandler(TransactionHandler):
         Besides this, the transaction's timestamp is verified, since
         that validation is common to all transactions.
         """
-        signer, timestamp, payload, handler = _unpack_transaction(transaction)
-        handler(payload, signer, timestamp, context)
+        try:
+            signer, timestamp, payload, handler = _unpack_transaction(transaction)
+            handler(payload, signer, timestamp, context)
+        except InvalidTransaction as e:
+            raise e
+        except InternalError as e:
+            print(e)
+            raise e
+        except Exception as e:
+            print(e)
+            raise InvalidTransaction('Handler method failed in SupplyChainTransactionHandler.apply()')
 
 
 def _unpack_transaction(transaction):
@@ -233,7 +242,8 @@ def _create_record(payload, signer, timestamp, state):
             record_id=record_id,
             property_name=property_name,
             data_type=prop.data_type,
-            signer=signer,
+            unit=prop.unit,
+            signer=signer
         )
 
         _make_new_property_page(
@@ -387,7 +397,7 @@ def _update_properties(payload, signer, timestamp, state):
 
     for update in updates:
         name, data_type = update.name, update.data_type
-        property_address = addresser.make_property_address(record_id, name)
+        property_address = addresser.get_property_address(record_id, name)
         property_container = _get_container(state, property_address)
 
         try:
@@ -415,7 +425,7 @@ def _update_properties(payload, signer, timestamp, state):
                 'Update has wrong type')
 
         page_number = prop.current_page
-        page_address = addresser.make_property_address(
+        page_address = addresser.get_property_address(
             record_id, name, page_number)
         page_container = _get_container(state, page_address)
 
@@ -450,7 +460,7 @@ def _update_properties(payload, signer, timestamp, state):
                 else 1
             )
 
-            new_page_address = addresser.make_property_address(
+            new_page_address = addresser.get_property_address(
                 record_id, name, new_page_number)
 
             new_page_container = _get_container(state, new_page_address)
@@ -487,7 +497,7 @@ def _update_properties(payload, signer, timestamp, state):
 # TODO: MOVE ME TO STATE AND REWORK ME
 def _get_property(state, record_id, property_name):
     """ Return property, property_container, property_address """
-    property_address = addresser.make_property_address(
+    property_address = addresser.get_property_address(
         record_id, property_name)
 
     property_container = _get_container(state, property_address)
@@ -631,8 +641,8 @@ def _accept_proposal(state, signer, proposal, timestamp):
         return Proposal.ACCEPTED
 
 
-def _make_new_property(state, record_id, property_name, data_type, signer):
-    property_address = addresser.make_property_address(
+def _make_new_property(state, record_id, property_name, data_type, unit, signer):
+    property_address = addresser.get_property_address(
         record_id, property_name, 0)
 
     property_container = _get_container(state, property_address)
@@ -648,6 +658,7 @@ def _make_new_property(state, record_id, property_name, data_type, signer):
         )],
         current_page=1,
         wrapped=False,
+        unit=unit
     )
 
     property_container.entries.extend([new_prop])
@@ -659,7 +670,7 @@ def _make_new_property(state, record_id, property_name, data_type, signer):
 def _make_new_property_page(
         state, timestamp, record_id,
         property_name, value, page_number):
-    page_address = addresser.make_property_address(
+    page_address = addresser.get_property_address(
         record_id, property_name, page_number)
 
     page_container = _get_container(state, page_address)
@@ -859,8 +870,8 @@ def _validate_timestamp(timestamp):
 DATA_TYPE_TO_ATTRIBUTE = {
     PropertySchema.BYTES: 'bytes_value',
     PropertySchema.STRING: 'string_value',
-    PropertySchema.NUMBER: 'float_value',
-    # PropertySchema.NUMBER: 'int_value',
+    # PropertySchema.NUMBER: 'float_value',
+    PropertySchema.NUMBER: 'number_value',
     PropertySchema.LOCATION: 'location_value',
 }
 

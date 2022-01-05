@@ -15,14 +15,17 @@
 
 from addressing.supply_chain_addressers.addresser import get_address_type
 from addressing.supply_chain_addressers.addresser import AddressSpace
-from protobuf.supply_chain_protos.agent_pb2 import AgentContainer, Agent
-from protobuf.supply_chain_protos.record_pb2 import RecordTypeContainer, RecordType, RecordContainer, Record
+from protobuf.supply_chain_protos.agent_pb2 import *
+from protobuf.supply_chain_protos.record_pb2 import *
+from protobuf.supply_chain_protos.property_pb2 import *
 
 
 CONTAINERS = {
     AddressSpace.AGENT: AgentContainer,
     AddressSpace.RECORD_TYPE: RecordTypeContainer,
-    AddressSpace.RECORD: RecordContainer
+    AddressSpace.RECORD: RecordContainer,
+    AddressSpace.PROPERTY: PropertyContainer,
+    AddressSpace.PROPERTY_PAGE: PropertyPageContainer
 }
 
 IGNORE = {
@@ -45,7 +48,14 @@ def data_to_dicts(address, data):
         raise TypeError('No container for action type: {}'.format(data_type))
 
     entries = _parse_proto(container, data).entries
-    return [_proto_to_dict(pb) for pb in entries]
+    dicts = [_proto_to_dict(pb) for pb in entries]
+    print(data_type, container.__name__, address)
+    for d in dicts:
+        print("---"*7, '\n', d)
+    if data_type is AddressSpace.PROPERTY_PAGE:
+        for e in dicts:
+            e["page_num"] = int(address[-4:])
+    return dicts
 
 
 def _parse_proto(proto_class, data):

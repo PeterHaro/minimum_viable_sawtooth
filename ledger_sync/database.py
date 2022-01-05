@@ -44,7 +44,7 @@ class Database(object):
         self._conn.close()
 
     def _ensure_db_and_tables(self):
-        """ Ensures that the 'supply_chain' db and 'blocks' table exists
+        """ Ensures that the necessary tables exists
         """
         dbs = r.db_list().run(self._conn)
         if DB_NAME not in dbs:
@@ -56,11 +56,22 @@ class Database(object):
         if 'blocks' not in tables:
             r.table_create("blocks", primary_key="block_num").run(self._conn)
         if 'agents' not in tables:
-            r.table_create("agents", primary_key="public_key").run(self._conn)
+            r.table_create("agents").run(self._conn)
+            r.db(self._name).table('agents').index_create("public_key").run(self._conn)
         if 'recordTypes' not in tables:
-            r.table_create("recordTypes", primary_key="name").run(self._conn)
+            r.table_create("recordTypes").run(self._conn)
+            r.db(self._name).table('recordTypes').index_create("name").run(self._conn)
         if 'records' not in tables:
-            r.table_create("records", primary_key="record_id").run(self._conn)
+            r.table_create("records").run(self._conn)
+            r.db(self._name).table('records').index_create("record_id").run(self._conn)
+        if 'properties' not in tables:
+            r.table_create("properties").run(self._conn)
+            r.db(self._name).table('properties')\
+                .index_create('attributes', [r.row["name"], r.row["record_id"]]).run(self._conn)
+        if 'propertyPages' not in tables:
+            r.table_create("propertyPages").run(self._conn)
+            r.db(self._name).table('propertyPages')\
+                .index_create('attributes', [r.row["name"], r.row["record_id"], r.row["page_num"]]).run(self._conn)
 
     def fetch(self, table_name, primary_id):
         """Fetches a single resource by its primary id
