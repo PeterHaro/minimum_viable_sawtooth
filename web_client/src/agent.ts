@@ -1,4 +1,5 @@
 import { getPublicKey } from "@noble/secp256k1";
+import { ActionEnum, SCPayload } from "./protos/proto";
 
 export class Agent {
 

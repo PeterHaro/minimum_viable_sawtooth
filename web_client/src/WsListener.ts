@@ -5,7 +5,7 @@ type Subscriptions = {[key in TableName]: Function[]};
 export class WsListener {
 
     private socket: WebSocket;
-    private subscriptions: Subscriptions = { agents: [], blocks: []};
+    private subscriptions: Subscriptions = { agents: [], blocks: [], recordTypes: []};
 
     constructor(
         url: string

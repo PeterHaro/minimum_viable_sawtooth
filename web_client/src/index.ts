@@ -7,6 +7,7 @@ const listener = new WsListener("localhost:9090");
 
 const blocksTable = document.getElementById("blocks-table").querySelector("tbody");
 const agentsTable = document.getElementById("agents-table").querySelector("tbody");
+const recordTypesTable = document.getElementById("record-types-table").querySelector("tbody");
 
 listener.subscribe("agents", (msg: any) => {
     const elem = agentsTable.insertRow(0);
@@ -16,6 +17,12 @@ listener.subscribe("agents", (msg: any) => {
 listener.subscribe("blocks", (msg: any) => {
     const elem = blocksTable.insertRow(0);
     elem.innerHTML = `<td>${msg.new_val.block_num}</td><td>${msg.new_val.block_id}</td>`;
+});
+
+listener.subscribe("recordTypes", (msg: any) => {
+    const elem = recordTypesTable.insertRow(0);
+    console.log(msg.new_val.properties);
+    elem.innerHTML = `<td>${msg.new_val.name}</td><td>${msg.new_val.properties.dataType}</td><td>${msg.new_val.properties.unit}</td>`;
 });
 
 
