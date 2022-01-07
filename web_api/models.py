@@ -6,17 +6,6 @@ from pydantic import BaseModel
 # Models are based on protobufs in project_root/protos/
 
 
-# class DataType(IntEnum):
-#     TYPE_UNSET = 0
-#     BYTES = 1
-#     BOOLEAN = 2
-#     NUMBER = 3
-#     STRING = 4
-#     ENUM = 5
-#     STRUCT = 6
-#     LOCATION = 7
-
-
 class Reporter(BaseModel):
     public_key: str
     authorized: bool
@@ -57,9 +46,15 @@ class Record(BaseModel):
     final: bool = False
 
 
+Record.update_forward_refs()
+
+
 class RecordType(BaseModel):
     name: str
     properties: List[PropertySchema]
+
+
+RecordType.update_forward_refs()
 
 
 class Property(BaseModel):
@@ -74,3 +69,64 @@ class Property(BaseModel):
     enum_options: Optional[List[str]]
     struct_properties: Optional[List[PropertySchema]]
     unit: Optional[str]
+
+
+Property.update_forward_refs()
+
+
+class Location(BaseModel):
+    latitude: int
+    longitude: int
+
+
+class PropertyValue(BaseModel):
+    name: str
+    data_type: str
+    # bytes_value: Optional[bytes]
+    boolean_value: Optional[bool]
+    number_value: Optional[int]
+    string_value: Optional[str]
+    enum_value: Optional[str]
+    struct_values: Optional[List['PropertyValue']]
+    location_value: Optional[Location]
+
+
+PropertyValue.update_forward_refs()
+
+
+class ReportedValue(BaseModel):
+    reporter_index: int
+    timestamp: int
+    # bytes_value: Optional[bytes]
+    boolean_value: Optional[bool]
+    number_value: Optional[int]
+    string_value: Optional[str]
+    enum_value: Optional[int]
+    struct_values: Optional[List[PropertyValue]]
+    location_value: Optional[Location]
+
+
+ReportedValue.update_forward_refs()
+
+
+class PropertyPage(BaseModel):
+    name: str
+    record_id: str
+    reported_values: Optional[List[ReportedValue]]
+
+
+PropertyPage.update_forward_refs()
+
+
+class NotFound(BaseModel):
+    detail: str
+
+
+VALUES_LOOKUP = {
+    "NUMBER": "number_value",
+    "STRING": "string_value",
+    "BOOLEAN": "boolean_value",
+    "ENUM": "enum_value",
+    "STRUCT": "struct_values",
+    "LOCATION": "location_value"
+}

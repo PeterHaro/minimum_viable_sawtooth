@@ -2,17 +2,20 @@ import asyncio
 from typing import List
 
 from database import get_table_feed, Database
-from models import Agent, RecordType, Record, Property
+from models import Agent, RecordType, Record, Property, PropertyPage, NotFound
 from websocket_manager import WebSocketManager
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Paas4Chain API",
+    description="API for querying Blockchain state.")
 db = Database()
 manager = WebSocketManager()
 updates_queue = asyncio.Queue()
+background_tasks = []  # A reference needs to be kept, or they will die
 
 
 @app.get("/agents", response_model=List[Agent])
@@ -30,9 +33,23 @@ async def records():
     return await db.get_records()
 
 
-@app.get("/properties/{record_id}", response_model=List[Property])
+@app.get(
+    "/property_page/{record_id}/{property_name}/{page_num}",
+    response_model=PropertyPage,
+    response_model_exclude_unset=True,
+    responses={"404": {"model": NotFound}})
+async def properties(property_name: str, record_id: str, page_num: int):
+    return await db.get_property_page(record_id, property_name, page_num)
+
+
+@app.get("/properties/{record_id}", response_model=List[Property], responses={"404": {"model": NotFound}})
 async def properties(record_id: str):
     return await db.get_properties(record_id)
+
+
+@app.get("/property/{record_id}/{property_name}", response_model=Property, responses={"404": {"model": NotFound}})
+async def properties(record_id: str, property_name: str):
+    return await db.get_property(record_id, property_name)
 
 
 @app.websocket("/ws/feed")
@@ -62,8 +79,8 @@ async def change_broadcaster_task():
 
 @app.on_event("startup")
 async def tasks_setup():
-    asyncio.create_task(table_change_task("blocks")),
-    asyncio.create_task(table_change_task("agents")),
-    asyncio.create_task(table_change_task("recordTypes")),
-    asyncio.create_task(change_broadcaster_task())
+    background_tasks.append(asyncio.create_task(table_change_task("blocks")))
+    background_tasks.append(asyncio.create_task(table_change_task("agents")))
+    background_tasks.append(asyncio.create_task(table_change_task("recordTypes")))
+    background_tasks.append(asyncio.create_task(change_broadcaster_task()))
     await db.connect()

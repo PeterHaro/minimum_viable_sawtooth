@@ -5,19 +5,11 @@ import time
 from sawtooth_sdk.processor.exceptions import InvalidTransaction, InternalError
 from sawtooth_sdk.processor.handler import TransactionHandler
 
-from protobuf.supply_chain_protos.payload_pb2 import SupplyChainPayload
-from protobuf.supply_chain_protos.payload_pb2 import AnswerProposalAction
-from protobuf.supply_chain_protos.agent_pb2 import AgentContainer, Agent
-from protobuf.supply_chain_protos.property_pb2 import PropertyContainer, Property
-from protobuf.supply_chain_protos.property_pb2 import PropertyPage
-from protobuf.supply_chain_protos.property_pb2 import PropertyPageContainer
-from protobuf.supply_chain_protos.property_pb2 import PropertySchema
-from protobuf.supply_chain_protos.proposal_pb2 import Proposal
-from protobuf.supply_chain_protos.proposal_pb2 import ProposalContainer
-from protobuf.supply_chain_protos.record_pb2 import Record
-from protobuf.supply_chain_protos.record_pb2 import RecordContainer
-from protobuf.supply_chain_protos.record_pb2 import RecordType
-from protobuf.supply_chain_protos.record_pb2 import RecordTypeContainer
+from protobuf.supply_chain_protos.payload_pb2 import *
+from protobuf.supply_chain_protos.agent_pb2 import *
+from protobuf.supply_chain_protos.property_pb2 import *
+from protobuf.supply_chain_protos.proposal_pb2 import *
+from protobuf.supply_chain_protos.record_pb2 import *
 
 from addressing.supply_chain_addressers import addresser
 
@@ -71,11 +63,10 @@ class SupplyChainTransactionHandler(TransactionHandler):
         except InvalidTransaction as e:
             raise e
         except InternalError as e:
-            print(e)
             raise e
         except Exception as e:
-            print(e)
-            raise InvalidTransaction('Handler method failed in SupplyChainTransactionHandler.apply()')
+            # Hack to avoid retries on general errors (InvalidTransaction erros should not trigger a retry)
+            raise InvalidTransaction('Handler method failed in SupplyChainTransactionHandler.apply():', e)
 
 
 def _unpack_transaction(transaction):
@@ -241,8 +232,7 @@ def _create_record(payload, signer, timestamp, state):
             state=state,
             record_id=record_id,
             property_name=property_name,
-            data_type=prop.data_type,
-            unit=prop.unit,
+            prop=prop,
             signer=signer
         )
 
@@ -641,7 +631,7 @@ def _accept_proposal(state, signer, proposal, timestamp):
         return Proposal.ACCEPTED
 
 
-def _make_new_property(state, record_id, property_name, data_type, unit, signer):
+def _make_new_property(state, record_id, property_name, prop, signer):
     property_address = addresser.get_property_address(
         record_id, property_name, 0)
 
@@ -650,7 +640,7 @@ def _make_new_property(state, record_id, property_name, data_type, unit, signer)
     new_prop = Property(
         name=property_name,
         record_id=record_id,
-        data_type=data_type,
+        data_type=prop.data_type,
         reporters=[Property.Reporter(
             public_key=signer,
             authorized=True,
@@ -658,8 +648,25 @@ def _make_new_property(state, record_id, property_name, data_type, unit, signer)
         )],
         current_page=1,
         wrapped=False,
-        unit=unit
+        unit=prop.unit
     )
+
+    if prop.data_type == PropertySchema.DataType.STRUCT:
+        # Getting protobuf MergeFrom error when not recreating the PropertSchemas (this fix is a bit hacky)
+        # Also, nested structs are not fully supported yet.
+        props = [
+            PropertySchema(
+                name=p.name,
+                data_type=p.data_type,
+                required=p.required,
+                fixed=p.fixed,
+                delayed=p.delayed,
+                number_exponent=p.number_exponent,
+                enum_options=p.enum_options,
+                struct_properties=p.struct_properties,
+                unit=p.unit
+            ) for p in prop.struct_properties]
+        new_prop.struct_properties.extend(props)
 
     property_container.entries.extend([new_prop])
     property_container.entries.sort(key=lambda prop: prop.name)
@@ -701,19 +708,29 @@ def _make_new_reported_value(reporter_index, timestamp, prop):
         timestamp=timestamp,
     )
 
-    attribute = DATA_TYPE_TO_ATTRIBUTE[prop.data_type]
-
-    # Cannot set messages, must set their attributes individually
-    if attribute == 'location_value':
-        reported_value.location_value.latitude = prop.location_value.latitude
-        reported_value.location_value.longitude = prop.location_value.longitude
-    else:
-        setattr(
-            reported_value,
-            attribute,
-            getattr(prop, attribute))
+    _set_attribute(prop, reported_value)
 
     return reported_value
+
+
+def _set_attribute(src, dst):
+    attribute = DATA_TYPE_TO_ATTRIBUTE[src.data_type]
+    if attribute == 'location_value':
+        dst.location_value.latitude = src.location_value.latitude
+        dst.location_value.longitude = src.location_value.longitude
+    elif attribute == 'struct_values':
+        _set_struct_attribute(dst, src.struct_values)
+    else:
+        setattr(dst, attribute, getattr(src, attribute))
+
+
+def _set_struct_attribute(dst, struct_values):
+    vals = []
+    for s in struct_values:
+        pv = PropertyValue(name=s.name, data_type=s.data_type)
+        _set_attribute(s, pv)
+        vals.append(pv)
+    dst.struct_values.extend(vals)
 
 
 def _answer_proposal(payload, signer, timestamp, state):
@@ -873,6 +890,8 @@ DATA_TYPE_TO_ATTRIBUTE = {
     # PropertySchema.NUMBER: 'float_value',
     PropertySchema.NUMBER: 'number_value',
     PropertySchema.LOCATION: 'location_value',
+    PropertySchema.ENUM: 'enum_value',
+    PropertySchema.STRUCT: 'struct_values'
 }
 
 TYPE_TO_ACTION_HANDLER = {

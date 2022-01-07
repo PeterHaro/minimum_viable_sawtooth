@@ -32,6 +32,16 @@ IGNORE = {
     # AddressSpace.OFFER_HISTORY: True
 }
 
+VALUE_TYPES = {
+    "BYTES": "bytes_value",
+    "BOOLEAN": "boolean_value",
+    "NUMBER": "number_value",
+    "STRING": "string_value",
+    "ENUM": "enum_value",
+    "STRUCT": "struct_values",
+    "LOCATION": "location_value"
+}
+
 
 def data_to_dicts(address, data):
     """Deserializes a protobuf "container" binary based on its address. Returns
@@ -49,9 +59,6 @@ def data_to_dicts(address, data):
 
     entries = _parse_proto(container, data).entries
     dicts = [_proto_to_dict(pb) for pb in entries]
-    print(data_type, container.__name__, address)
-    for d in dicts:
-        print("---"*7, '\n', d)
     if data_type is AddressSpace.PROPERTY_PAGE:
         for e in dicts:
             e["page_num"] = int(address[-4:])
@@ -84,5 +91,15 @@ def _proto_to_dict(proto):
 
         else:
             result[key] = value
+
+    # Remove unused data fields
+    data_type = result.get("data_type")
+    if data_type:
+        for dt, vn in VALUE_TYPES.items():
+            if dt != data_type:
+                try:
+                    result.pop(vn)
+                except KeyError:
+                    pass
 
     return result
