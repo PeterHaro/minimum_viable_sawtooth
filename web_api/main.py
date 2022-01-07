@@ -38,17 +38,17 @@ async def records():
     response_model=PropertyPage,
     response_model_exclude_unset=True,
     responses={"404": {"model": NotFound}})
-async def properties(property_name: str, record_id: str, page_num: int):
+async def record_property_page(property_name: str, record_id: str, page_num: int):
     return await db.get_property_page(record_id, property_name, page_num)
 
 
 @app.get("/properties/{record_id}", response_model=List[Property], responses={"404": {"model": NotFound}})
-async def properties(record_id: str):
+async def record_properties(record_id: str):
     return await db.get_properties(record_id)
 
 
 @app.get("/property/{record_id}/{property_name}", response_model=Property, responses={"404": {"model": NotFound}})
-async def properties(record_id: str, property_name: str):
+async def record_property(record_id: str, property_name: str):
     return await db.get_property(record_id, property_name)
 
 
