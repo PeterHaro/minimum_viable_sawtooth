@@ -15,7 +15,7 @@ app = FastAPI(
 db = Database()
 manager = WebSocketManager()
 updates_queue = asyncio.Queue()
-background_tasks = []  # A reference needs to be kept, or they will die
+background_tasks = []  # A reference needs to be kept, or tasks die
 
 
 @app.get("/agents", response_model=List[Agent])
@@ -38,7 +38,7 @@ async def records():
     response_model=PropertyPage,
     response_model_exclude_unset=True,
     responses={"404": {"model": NotFound}})
-async def record_property_page(property_name: str, record_id: str, page_num: int):
+async def record_property_page(record_id: str, property_name: str, page_num: int):
     return await db.get_property_page(record_id, property_name, page_num)
 
 

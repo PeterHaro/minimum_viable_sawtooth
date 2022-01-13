@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from rethinkdb.errors import ReqlNonExistenceError
 
 from db_config import DB_HOST, DB_PORT, DB_NAME
 
@@ -28,36 +29,45 @@ class Database:
         self.connection = await _get_connection()
 
     async def get_agents(self):
+        block = await self._current_block_num()
         return await r.table('agents') \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
 
     async def get_record_types(self):
+        block = await self._current_block_num()
         return await r.table('recordTypes') \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
 
     async def get_records(self):
+        block = await self._current_block_num()
         return await r.table('records') \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
 
     async def get_properties(self, record_id: str):
-        properties = await r.table('properties') \
-            .filter(r.row['record_id'] == record_id) \
+        block = await self._current_block_num()
+        return await r.table('properties') \
+            .filter({'record_id': record_id}) \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .coerce_to('array').run(self.connection)
-
-        return properties
 
     async def get_property(self, record_id: str, property_name: str):
+        block = await self._current_block_num()
         prop = await r.table('properties') \
-            .filter(r.row['name'] == property_name and r.row['record_id'] == record_id) \
+            .filter({'name': property_name, 'record_id': record_id}) \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
+            .max('start_block_num') \
             .without('delta_id', 'start_block_num', 'end_block_num') \
-            .coerce_to('array').run(self.connection)
+            .run(self.connection)
 
         try:
-            return prop[0]
+            return prop
         except IndexError:
             raise HTTPException(
                 status_code=404, detail=f'Property ({property_name}) or record_id ({record_id}) not found.')
@@ -72,18 +82,37 @@ class Database:
         excludes = {'reported_values': {v: True for v in VALUES_LOOKUP.values()}}
         excludes['reported_values'].pop(value_key)
 
+        block = await self._current_block_num()
+
         resp = await r.table('propertyPages') \
-            .filter(
-                r.row['record_id'] == record_id and
-                r.row['name'] == property_name and
-                r.row['page_num'] == page_num
-            ) \
+            .filter({
+                'record_id': record_id,
+                'name': property_name,
+                'page_num': page_num
+            }) \
+            .filter((r.row['start_block_num'] <= block) & (r.row['end_block_num'] >= block)) \
+            .max('start_block_num') \
             .without('delta_id', 'start_block_num', 'end_block_num') \
             .without(excludes) \
             .coerce_to('array') \
             .run(self.connection)
 
         try:
-            return resp[0]
+            return resp
         except IndexError:
             raise HTTPException(status_code=404, detail=f"Page {page_num} not found.")
+
+    async def _current_block_num(self):
+        try:
+            block = await r.table('blocks') \
+                .max('block_num') \
+                .without('block_id') \
+                .run(self.connection)
+            return block['block_num']
+        except ReqlNonExistenceError:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Failed to find a block in database. Has any state been added to the blocckchain yet?")
+        except IndexError:
+            raise HTTPException(status_code=500, detail=f"Failed to find a block in database.")
+
