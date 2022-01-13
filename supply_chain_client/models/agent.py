@@ -1,11 +1,11 @@
 import time
 
 from supply_chain_client.crypto import get_new_signer
-from supply_chain_client.protobuf.payload_pb2 import *
+from supply_chain_client.protobuf.payload_pb2 import SupplyChainPayload, CreateAgentAction
 from addressing.supply_chain_addressers.addresser import get_agent_address
 
 
-class Agent:
+class AgentItem:
 
     def __init__(self, name: str):
         self.name = name
@@ -32,5 +32,5 @@ class Agent:
         return get_agent_address(self._public_key)
 
     @property
-    def pub_key(self):
+    def public_key(self):
         return self._public_key
