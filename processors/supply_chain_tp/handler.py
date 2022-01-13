@@ -57,16 +57,8 @@ class SupplyChainTransactionHandler(TransactionHandler):
         Besides this, the transaction's timestamp is verified, since
         that validation is common to all transactions.
         """
-        try:
-            signer, timestamp, payload, handler = _unpack_transaction(transaction)
-            handler(payload, signer, timestamp, context)
-        except InvalidTransaction as e:
-            raise e
-        except InternalError as e:
-            raise e
-        except Exception as e:
-            # Hack to avoid retries on general errors (InvalidTransaction erros should not trigger a retry)
-            raise InvalidTransaction('Handler method failed in SupplyChainTransactionHandler.apply():', e)
+        signer, timestamp, payload, handler = _unpack_transaction(transaction)
+        handler(payload, signer, timestamp, context)
 
 
 def _unpack_transaction(transaction):
@@ -106,8 +98,7 @@ def _create_agent(payload, signer, timestamp, state):
 
     for agent in container.entries:
         if agent.public_key == signer:
-            raise InvalidTransaction(
-                'Agent already exists')
+            raise InvalidTransaction('Agent with the public key {} already exists'.format(agent.public_key))
 
     agent = Agent(
         public_key=signer,
@@ -648,6 +639,7 @@ def _make_new_property(state, record_id, property_name, prop, signer):
         )],
         current_page=1,
         wrapped=False,
+        fixed=prop.fixed,
         unit=prop.unit
     )
 
@@ -669,7 +661,7 @@ def _make_new_property(state, record_id, property_name, prop, signer):
         new_prop.struct_properties.extend(props)
 
     property_container.entries.extend([new_prop])
-    property_container.entries.sort(key=lambda prop: prop.name)
+    property_container.entries.sort(key=lambda p: p.name)
 
     _set_container(state, property_address, property_container)
 
