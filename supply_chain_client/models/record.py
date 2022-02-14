@@ -3,11 +3,13 @@ from typing import List
 
 from supply_chain_client.protobuf.property_pb2 import PropertyValue
 from supply_chain_client.protobuf.payload_pb2 import CreateRecordAction, SupplyChainPayload
+
+from supply_chain_client.models.item import BlockchainItem
 from supply_chain_client.models.record_type import RecordTypeItem
 from addressing.supply_chain_addressers.addresser import get_record_address, get_property_address
 
 
-class RecordItem:
+class RecordItem(BlockchainItem):
 
     def __init__(self, record_id: str, record_type: RecordTypeItem, properties: List[PropertyValue]):
         self.record_id = record_id

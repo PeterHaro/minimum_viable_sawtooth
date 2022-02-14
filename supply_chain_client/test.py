@@ -1,7 +1,8 @@
 import unittest
 
-from client import SupplyChainClient
+from example_client import ExampleClient
 from models.agent import AgentItem
+from supply_chain_client.crypto import get_new_signer
 from supply_chain_client.models.fish_pallet import fish_pallet_type
 
 unittest.defaultTestLoader.sortTestMethodsUsing = lambda *args: -1
@@ -16,7 +17,8 @@ test_pallet = {
 class TestClientMethods(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.client = SupplyChainClient("http://localhost:8008")
+        signer = get_new_signer()
+        self.client = ExampleClient("http://localhost:8008", signer)
         self.agent = AgentItem("test_agent")
 
     def test_client(self):

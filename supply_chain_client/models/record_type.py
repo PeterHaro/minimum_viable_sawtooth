@@ -4,9 +4,10 @@ from typing import List
 from protobuf.property_pb2 import PropertySchema
 from protobuf.payload_pb2 import CreateRecordTypeAction, SupplyChainPayload
 from addressing.supply_chain_addressers.addresser import get_record_type_address
+from supply_chain_client.models.item import BlockchainItem
 
 
-class RecordTypeItem:
+class RecordTypeItem(BlockchainItem):
 
     def __init__(self, name: str, properties: List[PropertySchema]):
         self.name = name

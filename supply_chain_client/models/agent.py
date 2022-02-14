@@ -1,15 +1,18 @@
 import time
 
+from sawtooth_signing import Signer
+
+from supply_chain_client.models.item import BlockchainItem
 from supply_chain_client.crypto import get_new_signer
 from supply_chain_client.protobuf.payload_pb2 import SupplyChainPayload, CreateAgentAction
 from addressing.supply_chain_addressers.addresser import get_agent_address
 
 
-class AgentItem:
+class AgentItem(BlockchainItem):
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, signer: Signer = None):
         self.name = name
-        self._signer = get_new_signer()
+        self._signer = signer if signer is not None else get_new_signer()
         self._public_key = self._signer.get_public_key().as_hex()
 
     def sign(self, msg):
