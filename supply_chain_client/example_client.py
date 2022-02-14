@@ -1,6 +1,6 @@
 from sawtooth_signing import Signer
 
-from supply_chain_client.SupplyClient import SupplyChainClient
+from supply_chain_client.SupplyChainClient import SupplyChainClient
 
 from supply_chain_client.crypto import get_new_signer
 from supply_chain_client.models.agent import AgentItem
