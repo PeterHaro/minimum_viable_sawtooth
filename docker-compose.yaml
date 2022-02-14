@@ -60,7 +60,7 @@ services:
     image: supply-tp
     container_name: supply-tp
     volumes:
-      - ".:/supply_chain"
+      - ".:/supply-chain"
     depends_on:
       - validator
       - rest-api

@@ -14,7 +14,7 @@ test_pallet = {
 }
 
 
-class TestClientMethods(unittest.TestCase):
+class ExampleClientMethodTests(unittest.TestCase):
 
     def setUp(self) -> None:
         signer = get_new_signer()
@@ -94,12 +94,6 @@ class TestClientMethods(unittest.TestCase):
         property_inv_2 = self.client.get_property("not_a_real_record_id", "Specie")
         self.assertEqual(property_inv_2, None)
 
-        # Test getting a property page
-        property_page = self.client.get_property_page(test_pallet["record_id"], "Specie", 1)
-        self.assertEqual(property_page.name, "Specie")
-        self.assertEqual(property_page.record_id, test_pallet["record_id"])
-        self.assertEqual(property_page.reported_values[0].string_value, test_pallet["Specie"])
-
         # Test getting a property page from non-exiting record
         property_page_inv = self.client.get_property_page("not_real_record_id", "Specie", 1)
         self.assertEqual(property_page_inv, None)
@@ -111,6 +105,12 @@ class TestClientMethods(unittest.TestCase):
         # Test getting a property page from non-exiting page
         property_page_inv_3 = self.client.get_property_page(test_pallet["record_id"], "Specie", 22)
         self.assertEqual(property_page_inv_3, None)
+
+        # Test getting a property page
+        property_page = self.client.get_property_page(test_pallet["record_id"], "Specie", 1)
+        self.assertEqual(property_page.name, "Specie")
+        self.assertEqual(property_page.record_id, test_pallet["record_id"])
+        self.assertEqual(property_page.reported_values[0].string_value, test_pallet["Specie"])
 
 
 if __name__ == '__main__':

@@ -29,5 +29,5 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F10
 RUN pip3 install grpcio-tools sawtooth-sdk
 RUN pip3 install --upgrade protobuf
 
-WORKDIR /supply_chain
-ENV PATH $PATH:/supply_chain/bin
+WORKDIR /supply-chain
+ENV PATH $PATH:/supply-chain/bin
